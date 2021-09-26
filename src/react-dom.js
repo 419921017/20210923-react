@@ -42,6 +42,8 @@ export function createDOM(vdom) {
   let dom;
   if ($$typeof === REACT_TEXT) {
     dom = document.createTextNode(props.content);
+  } else if (typeof type === 'function') {
+    return mountFunctionComponent(vdom);
   } else if ($$typeof === REACT_ELEMENT) {
     dom = document.createElement(type);
   }
@@ -60,6 +62,18 @@ export function createDOM(vdom) {
 
   vdom.dom = dom;
   return dom;
+}
+
+/**
+ * 处理函数组件, vdom转成dom
+ *
+ * @param {*} vdom
+ */
+function mountFunctionComponent(vdom) {
+  let { type, props } = vdom;
+  let renderVdom = type(props);
+  vdom.oldRenderVdom = renderVdom;
+  return createDOM(renderVdom);
 }
 
 /**
@@ -92,7 +106,6 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
 }
 
 function reconcileChildren(childrenVdom, parentDOM) {
-  debugger;
   for (let i = 0; i < childrenVdom.length; i++) {
     const childVdom = childrenVdom[i];
     mount(childVdom, parentDOM);
