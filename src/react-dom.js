@@ -43,6 +43,9 @@ export function createDOM(vdom) {
   if ($$typeof === REACT_TEXT) {
     dom = document.createTextNode(props.content);
   } else if (typeof type === 'function') {
+    if (type.isReactComponent) {
+      return mountClassComponent(vdom);
+    }
     return mountFunctionComponent(vdom);
   } else if ($$typeof === REACT_ELEMENT) {
     dom = document.createElement(type);
@@ -62,6 +65,19 @@ export function createDOM(vdom) {
 
   vdom.dom = dom;
   return dom;
+}
+
+/**
+ * 处理类组件
+ *
+ * @param {*} vdom
+ */
+function mountClassComponent(vdom) {
+  let { type: ClassComponent, props } = vdom;
+  let classInstance = new ClassComponent(props);
+  let renderVdom = classInstance.render();
+  vdom.oldRenderVdom = renderVdom;
+  return createDOM(renderVdom);
 }
 
 /**
