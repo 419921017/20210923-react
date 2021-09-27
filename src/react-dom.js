@@ -1,5 +1,5 @@
 import { REACT_ELEMENT, REACT_TEXT } from './constants';
-
+import { addEvent } from './event';
 /**
  * 将虚拟dom变成真实dom, 插入到容器内部
  * react的入口
@@ -110,7 +110,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
         dom.style[attr] = styleObj[attr];
       }
     } else if (key.startsWith('on')) {
-      dom[key.toLocaleLowerCase()] = newProps[key];
+      addEvent(dom, key.toLocaleLowerCase(), newProps[key]);
+      // dom[key.toLocaleLowerCase()] = newProps[key];
     } else {
       dom[key] = newProps[key];
     }

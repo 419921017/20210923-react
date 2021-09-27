@@ -16,3 +16,7 @@ export function wrapToVdom(element) {
       }
     : element;
 }
+
+export function isFunction(obj) {
+  return typeof obj === 'function';
+}

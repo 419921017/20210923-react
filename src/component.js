@@ -1,5 +1,17 @@
 import { createDOM, findDOM, compareTwoVdom } from './react-dom';
 
+export let updateQueue = {
+  isBatchingUpdate: false,
+  updaters: [],
+  batchUpdate() {
+    for (const updater of updateQueue.updaters) {
+      updater.updateComponent();
+    }
+    updateQueue.updaters.length = 0;
+    updateQueue.isBatchingUpdate = false;
+  },
+};
+
 export default class Component {
   static isReactComponent = true;
   constructor(props) {
@@ -39,7 +51,14 @@ class Updater {
     this.emitUpdate();
   }
   emitUpdate() {
-    this.updateComponent();
+    // 可能是同步更新, 可能是异步批量更新
+    if (updateQueue.isBatchingUpdate) {
+      // 异步批量更新
+      updateQueue.updaters.push(this);
+    } else {
+      // 同步更新
+      this.updateComponent();
+    }
   }
   updateComponent() {
     const { classInstance, pendingStates } = this;
@@ -51,6 +70,9 @@ class Updater {
     const { classInstance, pendingStates } = this;
     let { state } = classInstance;
     pendingStates.forEach((partialState) => {
+      if (typeof partialState == 'function') {
+        partialState = partialState(state);
+      }
       state = { ...state, ...partialState };
     });
     pendingStates.length = 0;
