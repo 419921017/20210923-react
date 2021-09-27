@@ -1,5 +1,6 @@
 import { REACT_ELEMENT } from './constants';
 import { wrapToVdom } from './utils';
+import Component from './component';
 
 /**
  * 创建虚拟DOM, React Element
@@ -39,12 +40,7 @@ function createElement(type, config, children) {
     props,
   };
 }
-class Component {
-  static isReactComponent = true;
-  constructor(props) {
-    this.props = props;
-  }
-}
+
 const React = {
   createElement,
   Component,

@@ -32,23 +32,50 @@ import ReactDOM from './react-dom';
 //   document.getElementById('root')
 // );
 
-class CC extends React.Component {
+// class CC extends React.Component {
+//   render() {
+//     return (
+//       <div className="title" style={{ color: 'pink' }}>
+//         <span>{this.props.name}</span>
+//         <span>{this.props.children}</span>
+//       </div>
+//     );
+//   }
+// }
+
+// let ele = React.createElement(
+//   CC,
+//   {
+//     name: 'hello',
+//   },
+//   '123'
+// );
+
+// ReactDOM.render(ele, document.getElementById('root'));
+
+class Counter extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      number: 0,
+    };
+  }
+  handleClick = () => {
+    this.setState({ number: this.state.number + 1 });
+    console.log(this.state);
+  };
   render() {
     return (
-      <div className="title" style={{ color: 'pink' }}>
-        <span>{this.props.name}</span>
-        <span>{this.props.children}</span>
+      <div>
+        <p>{this.props.title}</p>
+        <p>number: {this.state.number}</p>
+        <button onClick={this.handleClick}>+</button>
       </div>
     );
   }
 }
 
-let ele = React.createElement(
-  CC,
-  {
-    name: 'hello',
-  },
-  '123'
-);
-
+let ele = React.createElement(Counter, {
+  title: '老标题',
+});
 ReactDOM.render(ele, document.getElementById('root'));

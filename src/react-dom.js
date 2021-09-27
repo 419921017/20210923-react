@@ -76,7 +76,7 @@ function mountClassComponent(vdom) {
   let { type: ClassComponent, props } = vdom;
   let classInstance = new ClassComponent(props);
   let renderVdom = classInstance.render();
-  vdom.oldRenderVdom = renderVdom;
+  classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom;
   return createDOM(renderVdom);
 }
 
@@ -109,6 +109,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
       for (let attr in styleObj) {
         dom.style[attr] = styleObj[attr];
       }
+    } else if (key.startsWith('on')) {
+      dom[key.toLocaleLowerCase()] = newProps[key];
     } else {
       dom[key] = newProps[key];
     }
@@ -126,6 +128,28 @@ function reconcileChildren(childrenVdom, parentDOM) {
     const childVdom = childrenVdom[i];
     mount(childVdom, parentDOM);
   }
+}
+export function findDOM(vdom) {
+  if (!vdom) return null;
+  if (vdom.dom) {
+    return vdom.dom;
+  } else {
+    return findDOM(vdom.oldRenderVdom);
+  }
+}
+
+/**
+ * dom-diff, 比较新旧Vdom的差异, 然后将差异同步到真实DOM上
+ *
+ * @export
+ * @param {*} parentNode
+ * @param {*} oldVdom
+ * @param {*} newVdom
+ */
+export function compareTwoVdom(parentNode, oldVdom, newVdom) {
+  let oldDOM = findDOM(oldVdom);
+  let newDOM = createDOM(newVdom);
+  parentNode.replaceChild(newDOM, oldDOM);
 }
 
 const ReactDOM = {
