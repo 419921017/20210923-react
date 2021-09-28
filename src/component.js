@@ -1,4 +1,4 @@
-import { createDOM, findDOM, compareTwoVdom } from './react-dom';
+import { findDOM, compareTwoVdom } from './react-dom';
 
 export let updateQueue = {
   isBatchingUpdate: false,
