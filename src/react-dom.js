@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_TEXT } from './constants';
+import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT } from './constants';
 import { addEvent } from './event';
 /**
  * 将虚拟dom变成真实dom, 插入到容器内部
@@ -37,10 +37,12 @@ export function createDOM(vdom) {
     return null;
   }
 
-  let { type, props, $$typeof } = vdom;
+  let { type, props, $$typeof, ref } = vdom;
   // 真实dom
   let dom;
-  if ($$typeof === REACT_TEXT) {
+  if (type && type.$$typeof === REACT_FORWARD_REF) {
+    return mountForwardComponent(vdom);
+  } else if ($$typeof === REACT_TEXT) {
     dom = document.createTextNode(props.content);
   } else if (typeof type === 'function') {
     if (type.isReactComponent) {
@@ -64,7 +66,19 @@ export function createDOM(vdom) {
   }
 
   vdom.dom = dom;
+  // 原生DOM中有个ref, ref指向DOM实例
+  if (ref) {
+    ref.current = dom;
+  }
   return dom;
+}
+
+function mountForwardComponent(vdom) {
+  let { type, props, ref } = vdom;
+  let renderVdom = type.render(props, ref);
+
+  vdom.oldRenderVdom = renderVdom;
+  return createDOM(renderVdom);
 }
 
 /**
@@ -73,8 +87,10 @@ export function createDOM(vdom) {
  * @param {*} vdom
  */
 function mountClassComponent(vdom) {
-  let { type: ClassComponent, props } = vdom;
+  let { type: ClassComponent, props, ref } = vdom;
   let classInstance = new ClassComponent(props);
+  // 设置ref值为类组件实例
+  if (ref) ref.current = classInstance;
   let renderVdom = classInstance.render();
   classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom;
   return createDOM(renderVdom);
