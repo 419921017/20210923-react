@@ -65,6 +65,7 @@ const React = {
   createElement,
   Component,
   createRef,
+  forwardRef,
 };
 
 export default React;

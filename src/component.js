@@ -37,6 +37,10 @@ export default class Component {
     compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom);
     // 将老的真实DOM替换为新的真实DOM
     this.oldRenderVdom = newRenderVdom;
+
+    if (this.componentDidUpdate) {
+      this.componentDidUpdate(this.props, this.state);
+    }
   }
 }
 
@@ -50,7 +54,8 @@ class Updater {
     this.pendingStates.push(partialState);
     this.emitUpdate();
   }
-  emitUpdate() {
+  emitUpdate(nextProps) {
+    this.nextProps = nextProps;
     // 可能是同步更新, 可能是异步批量更新
     if (updateQueue.isBatchingUpdate) {
       // 异步批量更新
@@ -61,9 +66,10 @@ class Updater {
     }
   }
   updateComponent() {
-    const { classInstance, pendingStates } = this;
-    if (pendingStates.length > 0) {
-      shouldUpdate(classInstance, this.getState());
+    const { classInstance, nextProps, pendingStates } = this;
+    // 状态和属性变了都会导致更新, 进入更新逻辑
+    if (nextProps || pendingStates.length > 0) {
+      shouldUpdate(classInstance, this.nextProps, this.getState());
     }
   }
   getState() {
@@ -80,7 +86,30 @@ class Updater {
   }
 }
 
-function shouldUpdate(classInstance, nextState) {
+/**
+ *
+ *
+ * @param {*} classInstance 类实例
+ * @param {*} nextProps     新属性
+ * @param {*} nextState     薪状态
+ */
+function shouldUpdate(classInstance, nextProps, nextState) {
+  let willUpdate = true;
+  // 如果有shouldComponentUpdate, 并且shouldComponentUpdate返回false, 就不更新
+  if (
+    classInstance.shouldComponentUpdate &&
+    !classInstance.shouldComponentUpdate(nextProps, nextState)
+  ) {
+    willUpdate = false;
+  }
+  if (willUpdate && classInstance.componentWillUpdate) {
+    classInstance.componentWillUpdate();
+  }
   classInstance.state = nextState;
-  classInstance.forceUpdate();
+  if (willUpdate) {
+    classInstance.forceUpdate();
+  }
+
+  // classInstance.state = nextState;
+  // classInstance.forceUpdate();
 }
