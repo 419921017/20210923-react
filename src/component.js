@@ -33,6 +33,15 @@ export default class Component {
     // 不太严谨
     // let oldDOM = oldRenderVdom.dom;
     let oldDOM = findDOM(oldRenderVdom);
+    if (this.constructor.getDerivedStateFromProps) {
+      let newState = this.constructor.getDerivedStateFromProps(
+        this.props,
+        this.state
+      );
+      if (newState) {
+        this.state = newState;
+      }
+    }
     let newRenderVdom = this.render();
     compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom);
     // 将老的真实DOM替换为新的真实DOM
