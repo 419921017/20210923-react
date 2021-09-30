@@ -42,13 +42,16 @@ export default class Component {
         this.state = newState;
       }
     }
+    let snapshot =
+      this.getSnapshotBeforeUpdate && this.getSnapshotBeforeUpdate();
+
     let newRenderVdom = this.render();
     compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom);
     // 将老的真实DOM替换为新的真实DOM
     this.oldRenderVdom = newRenderVdom;
 
     if (this.componentDidUpdate) {
-      this.componentDidUpdate(this.props, this.state);
+      this.componentDidUpdate(this.props, this.state, snapshot);
     }
   }
 }
