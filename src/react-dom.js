@@ -1,4 +1,12 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT } from './constants';
+import {
+  DELETION,
+  MOVE,
+  PLACEMENT,
+  REACT_ELEMENT,
+  REACT_FORWARD_REF,
+  REACT_FRAGMENT,
+  REACT_TEXT,
+} from './constants';
 import { addEvent } from './event';
 /**
  * 将虚拟dom变成真实dom, 插入到容器内部
@@ -43,6 +51,8 @@ export function createDOM(vdom) {
   let dom;
   if (type && type.$$typeof === REACT_FORWARD_REF) {
     return mountForwardComponent(vdom);
+  } else if (type === REACT_FRAGMENT) {
+    dom = document.createDocumentFragment();
   } else if ($$typeof === REACT_TEXT) {
     dom = document.createTextNode(props.content);
   } else if (typeof type === 'function') {
@@ -59,7 +69,8 @@ export function createDOM(vdom) {
     if (props.children) {
       // 说明是个react-element
       if (typeof props.children == 'object' && props.children.type) {
-        mount(props.children, dom);
+        props.children._mountIndex = 0;
+        render(props.children, dom);
       } else if (Array.isArray(props.children)) {
         reconcileChildren(props.children, dom);
       }
@@ -159,7 +170,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
 function reconcileChildren(childrenVdom, parentDOM) {
   for (let i = 0; i < childrenVdom.length; i++) {
     const childVdom = childrenVdom[i];
-    mount(childVdom, parentDOM);
+    childVdom._mountIndex = i;
+    render(childVdom, parentDOM);
   }
 }
 export function findDOM(vdom) {
@@ -200,6 +212,7 @@ export function compareTwoVdom(parentNode, oldVdom, newVdom, nextDOM) {
     } else {
       parentNode.appendChild(newDOM);
     }
+    if (newDOM._componentDidMount) newDOM._componentDidMount();
   } else if (oldVdom && newVdom && oldVdom.type !== newVdom.type) {
     unMountVdom(oldVdom);
     // mount(newVdom, parentNode);
@@ -229,8 +242,11 @@ function updateElement(oldVdom, newVdom) {
 
       currentDOM.textContent = newVdom.props.content;
     }
-    // 原生元素
+  } else if (oldVdom.type === REACT_FRAGMENT) {
+    let currentDOM = (newVdom.dom = findDOM(oldVdom));
+    updateChildren(currentDOM, oldVdom.props.children, newVdom.props.children);
   } else if (typeof oldVdom.type === 'string') {
+    // 原生元素
     // 获取旧的真实dom, 准备复用
     let currentDOM = (newVdom.dom = findDOM(oldVdom));
     updateProps(currentDOM, oldVdom.props, newVdom.props);
@@ -276,7 +292,7 @@ function updateFunctionComponent(oldVdom, newVdom) {
 
 /**
  * 更新子节点
- *
+ * 实现完整dom-diff
  * @param {*} parentDOM
  * @param {*} oldVChildren
  * @param {*} newVChildren
@@ -284,19 +300,103 @@ function updateFunctionComponent(oldVdom, newVdom) {
 function updateChildren(parentDOM, oldVChildren, newVChildren) {
   oldVChildren = Array.isArray(oldVChildren) ? oldVChildren : [oldVChildren];
   newVChildren = Array.isArray(newVChildren) ? newVChildren : [newVChildren];
-  let maxChildrenLength = Math.max(oldVChildren.length, newVChildren.length);
-  for (let i = 0; i < maxChildrenLength.length; i++) {
-    // 取出当前节点的下一个, 最近弟弟的真实DOM节点
-    let nextVdom = oldVChildren.find(
-      (item, index) => index > i && item && findDOM(item)
-    );
-    compareTwoVdom(
-      parentDOM,
-      oldVChildren[i],
-      newVChildren[i],
-      findDOM(nextVdom)
-    );
-  }
+
+  let keyedOldMap = {};
+  let lastPlacedIndex = 0;
+  oldVChildren.forEach((oldVChild, index) => {
+    let oldKey = oldVChild.key || index;
+    keyedOldMap[oldKey] = oldVChild;
+  });
+  // 存放将要进行的操作
+  let patch = [];
+  newVChildren.forEach((newVChild, index) => {
+    // NOTE: 省略了类型判断
+    newVChild._mountIndex = index;
+    let newKey = newVChild.key || index;
+    let oldVChild = keyedOldMap[newKey];
+    if (oldVChild) {
+      // 如果找到, 执行更新
+      updateElement(oldVChild, newVChild);
+      if (oldVChild._mountIndex < lastPlacedIndex) {
+        patch.push({
+          type: MOVE,
+          oldVChild,
+          newVChild,
+          fromIndex: oldVChild._mountIndex,
+          toIndex: index,
+          // mountIndex: index,
+        });
+      }
+      // 如果此节点被复用了, 要从map中删除
+      delete keyedOldMap[newKey];
+      lastPlacedIndex = Math.max(lastPlacedIndex, oldVChild._mountIndex);
+    } else {
+      patch.push({
+        type: PLACEMENT,
+        newVChild,
+        // mountIndex: index,
+        toIndex: index,
+      });
+    }
+  });
+  // 删除操作
+  // Object.values(keyedOldMap).forEach((oldVChild) => {
+  //   patch.push({
+  //     type: DELETION,
+  //     oldVChild,
+  //     fromIndex: oldVChild._mountIndex,
+  //   });
+  // });
+
+  // 获取要移动的元素
+  const moveChild = patch
+    .filter((action) => action.type === MOVE)
+    .map((action) => action.oldVChild);
+
+  // 要移动和要删除的都要删除
+  // 这里的删除指的是在界面上删除, 实际上在内存中还是存在的
+  Object.values(keyedOldMap)
+    .concat(moveChild)
+    .forEach((oldVChild) => {
+      // patch.push({
+      //   type: DELETION,
+      //   oldVChild,
+      //   fromIndex: oldVChild._mountIndex,
+      // });
+      let currentDOM = findDOM(oldVChild);
+      currentDOM.parentNode.removeChild(currentDOM);
+    });
+
+  patch.forEach((action) => {
+    let { type, oldVChild, newVChild, fromIndex, toIndex } = action;
+    // 获取真实的dom元素集合
+    let childNodes = parentDOM.childNodes;
+    if (type === PLACEMENT) {
+      let newDOM = createDOM(newVChild);
+      let childDOMNode = childNodes[toIndex];
+      parentDOM.insetBefore(newDOM, childDOMNode);
+    } else if (type === MOVE) {
+      // oldDOM在界面上没有了, 但是在内存中还存在
+      let oldDOM = findDOM(oldVChild);
+      let childDOMNode = childNodes[toIndex];
+      parentDOM.insetBefore(oldDOM, childDOMNode);
+    }
+  });
+
+  // 简单版本, 直接替换, 没有dom-dif
+  // let maxChildrenLength = Math.max(oldVChildren.length, newVChildren.length);
+  // for (let i = 0; i < maxChildrenLength.length; i++) {
+  //   // 取出当前节点的下一个, 最近弟弟的真实DOM节点
+  //   let nextVdom = oldVChildren.find(
+  //     (item, index) => index > i && item && findDOM(item)
+  //   );
+  //   compareTwoVdom(
+  //     parentDOM,
+  //     oldVChildren[i],
+  //     newVChildren[i],
+  //     findDOM(nextVdom)
+  //   );
+  // }
 }
 
 function unMountVdom(vdom) {

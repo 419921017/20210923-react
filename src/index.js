@@ -83,29 +83,55 @@ import ReactDOM from 'react-dom';
 // });
 // ReactDOM.render(ele, document.getElementById('root'));
 
-class Sum extends React.Component {
-  a;
-  b;
-  result;
+// class Sum extends React.Component {
+//   a;
+//   b;
+//   result;
+//   constructor(props) {
+//     super(props);
+//     this.a = React.createRef();
+//     this.b = React.createRef();
+//     this.result = React.createRef();
+//   }
+//   handleAdd = () => {
+//     let a = this.a.current.value;
+//     let b = this.b.current.value;
+//     this.result.current.value = a + b;
+//   };
+//   render() {
+//     return (
+//       <>
+//         <input ref={this.a} />+<input ref={this.b} />
+//         <button onClick={this.handleAdd}>=</button>
+//         <input ref={this.result} />
+//       </>
+//     );
+//   }
+// }
+// ReactDOM.render(<Sum />, document.getElementById('root'));
+
+class Counter extends React.Component {
   constructor(props) {
     super(props);
-    this.a = React.createRef();
-    this.b = React.createRef();
-    this.result = React.createRef();
+    this.state = {
+      list: ['A', 'B', 'C', 'D', 'E', 'F'],
+    };
   }
-  handleAdd = () => {
-    let a = this.a.current.value;
-    let b = this.b.current.value;
-    this.result.current.value = a + b;
+  handleClick = () => {
+    this.setState({
+      list: ['A', 'C', 'E', 'B', 'G'],
+    });
   };
   render() {
     return (
-      <>
-        <input ref={this.a} />+<input ref={this.b} />
-        <button onClick={this.handleAdd}>=</button>
-        <input ref={this.result} />
-      </>
+      <React.Fragment>
+        <ul>
+          {this.state.list.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <button onClick={this.handleClick}></button>
+      </React.Fragment>
     );
   }
 }
-ReactDOM.render(<Sum />, document.getElementById('root'));
