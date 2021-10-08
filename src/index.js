@@ -153,115 +153,187 @@ let ThemeContext = React.createContext();
 //     );
 //   }
 // }
-function Header(props) {
-  return (
-    <ThemeContext.Consumer>
-      {(value) => (
-        <div
-          style={{
-            margin: 10,
-            border: `5px solid ${value.color}`,
-            padding: '5px',
-          }}
-        >
-          Header{props.children}
-        </div>
-      )}
-    </ThemeContext.Consumer>
-  );
-}
-class Title extends React.Component {
-  static contextType = ThemeContext;
 
+// function Header(props) {
+//   return (
+//     <ThemeContext.Consumer>
+//       {(value) => (
+//         <div
+//           style={{
+//             margin: 10,
+//             border: `5px solid ${value.color}`,
+//             padding: '5px',
+//           }}
+//         >
+//           Header{props.children}
+//         </div>
+//       )}
+//     </ThemeContext.Consumer>
+//   );
+// }
+// class Title extends React.Component {
+//   static contextType = ThemeContext;
+
+//   render() {
+//     return (
+//       <div
+//         style={{
+//           margin: 10,
+//           border: `5px solid ${this.context.color}`,
+//           padding: '5px',
+//         }}
+//       >
+//         Title{this.props.children}
+//       </div>
+//     );
+//   }
+// }
+// class Main extends React.Component {
+//   static contextType = ThemeContext;
+//   render() {
+//     return (
+//       <div
+//         style={{
+//           margin: 10,
+//           border: `5px solid ${this.context.color}`,
+//           padding: '5px',
+//         }}
+//       >
+//         Main{this.props.children}
+//       </div>
+//     );
+//   }
+// }
+// class Content extends React.Component {
+//   static contextType = ThemeContext;
+//   render() {
+//     return (
+//       <div
+//         style={{
+//           margin: 10,
+//           border: `5px solid ${this.context.color}`,
+//           padding: '5px',
+//         }}
+//       >
+//         content
+//         <button onClick={() => this.context.changeColor('red')}>red</button>
+//         <button onClick={() => this.context.changeColor('green')}>green</button>
+//         {this.props.children}
+//       </div>
+//     );
+//   }
+// }
+
+// class Page extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.state = { color: 'red' };
+//   }
+//   changeColor = (color) => {
+//     this.setState({
+//       color,
+//     });
+//   };
+//   render() {
+//     let value = { color: this.state.color, changeColor: this.changeColor };
+//     return (
+//       <ThemeContext.Provider value={value}>
+//         <div
+//           style={{
+//             margin: 10,
+//             border: `5px solid ${this.state.color}`,
+//             padding: '5px',
+//           }}
+//         >
+//           <Header>
+//             <Title></Title>
+//           </Header>
+//         </div>
+//         <div
+//           style={{
+//             margin: 10,
+//             border: `5px solid ${this.state.color}`,
+//             padding: '5px',
+//           }}
+//         >
+//           <Main>
+//             <Content></Content>
+//           </Main>
+//         </div>
+//       </ThemeContext.Provider>
+//     );
+//   }
+// }
+
+// ReactDOM.render(<Page />, document.getElementById('root'));
+
+// const withLoading = (loading) => (OldComponent) => {
+//   return class extends React.Component {
+//     render() {
+//       let state = {
+//         show: () => {
+//           console.log('show');
+//         },
+//         hide: () => {
+//           console.log('hide');
+//         },
+//       };
+//       return <OldComponent {...this.props} {...state}></OldComponent>;
+//     }
+//   };
+// };
+
+// class Hello extends React.Component {
+//   render() {
+//     return (
+//       <div>
+//         {this.props.title}
+//         <button onClick={this.props.show}>show</button>
+//         <button onClick={this.props.hide}>hide</button>
+//       </div>
+//     );
+//   }
+// }
+
+// let HelloWithLoading = withLoading('...loading')(Hello);
+// ReactDOM.render(
+//   <HelloWithLoading title="标题" />,
+//   document.getElementById('root')
+// );
+
+class Button extends React.Component {
+  state = { name: '张三' };
   render() {
-    return (
-      <div
-        style={{
-          margin: 10,
-          border: `5px solid ${this.context.color}`,
-          padding: '5px',
-        }}
-      >
-        Title{this.props.children}
-      </div>
-    );
-  }
-}
-class Main extends React.Component {
-  static contextType = ThemeContext;
-  render() {
-    return (
-      <div
-        style={{
-          margin: 10,
-          border: `5px solid ${this.context.color}`,
-          padding: '5px',
-        }}
-      >
-        Main{this.props.children}
-      </div>
-    );
-  }
-}
-class Content extends React.Component {
-  static contextType = ThemeContext;
-  render() {
-    return (
-      <div
-        style={{
-          margin: 10,
-          border: `5px solid ${this.context.color}`,
-          padding: '5px',
-        }}
-      >
-        content
-        <button onClick={() => this.context.changeColor('red')}>red</button>
-        <button onClick={() => this.context.changeColor('green')}>green</button>
-        {this.props.children}
-      </div>
-    );
+    return <button name={this.state.name} title={this.props.title}></button>;
   }
 }
 
-class Page extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { color: 'red' };
-  }
-  changeColor = (color) => {
-    this.setState({
-      color,
-    });
+const wrapper = (OldComponent) => {
+  return class extends OldComponent {
+    state = { ...this.state, number: 0 };
+    handleClick = () => {
+      this.setState({ number: this.state.number + 1 });
+    };
+    render() {
+      let renderVdom = super.render();
+      let newProps = {
+        ...renderVdom.props,
+        ...this.state,
+        onClick: this.handleClick,
+      };
+      return React.cloneElement(
+        renderVdom,
+        newProps,
+        this.state.name,
+        this.state.number
+      );
+    }
   };
-  render() {
-    let value = { color: this.state.color, changeColor: this.changeColor };
-    return (
-      <ThemeContext.Provider value={value}>
-        <div
-          style={{
-            margin: 10,
-            border: `5px solid ${this.state.color}`,
-            padding: '5px',
-          }}
-        >
-          <Header>
-            <Title></Title>
-          </Header>
-        </div>
-        <div
-          style={{
-            margin: 10,
-            border: `5px solid ${this.state.color}`,
-            padding: '5px',
-          }}
-        >
-          <Main>
-            <Content></Content>
-          </Main>
-        </div>
-      </ThemeContext.Provider>
-    );
-  }
-}
+};
 
-ReactDOM.render(<Page />, document.getElementById('root'));
+let WrappedButton = wrapper(Button);
+
+ReactDOM.render(
+  <WrappedButton></WrappedButton>,
+  document.getElementById('root')
+);
