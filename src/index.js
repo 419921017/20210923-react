@@ -136,7 +136,7 @@ import ReactDOM from 'react-dom';
 //   }
 // }
 // ReactDOM.render(<Counter />, document.getElementById('root'));
-let ThemeContext = React.createContext();
+// let ThemeContext = React.createContext();
 // class Header extends React.Component {
 //   static contextType = ThemeContext;
 //   render() {
@@ -301,39 +301,47 @@ let ThemeContext = React.createContext();
 //   document.getElementById('root')
 // );
 
-class Button extends React.Component {
-  state = { name: '张三' };
-  render() {
-    return <button name={this.state.name} title={this.props.title}></button>;
-  }
-}
+// class Button extends React.Component {
+//   state = { name: '张三' };
+//   render() {
+//     return <button name={this.state.name} title={this.props.title}></button>;
+//   }
+// }
 
-const wrapper = (OldComponent) => {
-  return class extends OldComponent {
-    state = { ...this.state, number: 0 };
-    handleClick = () => {
-      this.setState({ number: this.state.number + 1 });
-    };
-    render() {
-      let renderVdom = super.render();
-      let newProps = {
-        ...renderVdom.props,
-        ...this.state,
-        onClick: this.handleClick,
-      };
-      return React.cloneElement(
-        renderVdom,
-        newProps,
-        this.state.name,
-        this.state.number
-      );
-    }
-  };
-};
+// const wrapper = (OldComponent) => {
+//   return class extends OldComponent {
+//     state = { ...this.state, number: 0 };
+//     handleClick = () => {
+//       this.setState({ number: this.state.number + 1 });
+//     };
+//     render() {
+//       let renderVdom = super.render();
+//       let newProps = {
+//         ...renderVdom.props,
+//         ...this.state,
+//         onClick: this.handleClick,
+//       };
+//       return React.cloneElement(
+//         renderVdom,
+//         newProps,
+//         this.state.name,
+//         this.state.number
+//       );
+//     }
+//   };
+// };
 
-let WrappedButton = wrapper(Button);
+// NOTE: 装饰器, 需要添加jsconfig和babel支持
+// @wrapper
+// class Button extends React.Component {
+//   state = { name: '张三' };
+//   render() {
+//     return <button name={this.state.name} title={this.props.title}></button>;
+//   }
+// }
+// // let WrappedButton = wrapper(Button);
 
-ReactDOM.render(
-  <WrappedButton></WrappedButton>,
-  document.getElementById('root')
-);
+// ReactDOM.render(
+//   <Button title="标题"></Button>,
+//   document.getElementById('root')
+// );
