@@ -17,6 +17,7 @@ export function addEvent(dom, eventType, eventHandler) {
     store = dom.store;
   }
   store[eventType] = eventHandler;
+
   if (!document[eventType]) {
     document[eventType] = dispatchEvent;
   }

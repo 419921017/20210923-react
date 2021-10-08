@@ -194,7 +194,7 @@ export function findDOM(vdom) {
  * @param {*} parentNode
  * @param {*} oldVdom
  * @param {*} newVdom
- * @param {*} nextVdom
+ * @param {*} nextDOM
  */
 export function compareTwoVdom(parentNode, oldVdom, newVdom, nextDOM) {
   // let oldDOM = findDOM(oldVdom);
