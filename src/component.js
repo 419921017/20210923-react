@@ -33,6 +33,11 @@ export default class Component {
     // 不太严谨
     // let oldDOM = oldRenderVdom.dom;
     let oldDOM = findDOM(oldRenderVdom);
+
+    if (this.constructor.contextType) {
+      this.context = this.constructor.contextType._currentValue;
+    }
+
     if (this.constructor.getDerivedStateFromProps) {
       let newState = this.constructor.getDerivedStateFromProps(
         this.props,

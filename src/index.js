@@ -110,29 +110,158 @@ import ReactDOM from 'react-dom';
 // }
 // ReactDOM.render(<Sum />, document.getElementById('root'));
 
-class Counter extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      list: ['A', 'B', 'C', 'D', 'E', 'F'],
-    };
-  }
-  handleClick = () => {
-    this.setState({
-      list: ['A', 'C', 'E', 'B', 'G'],
-    });
-  };
+// class Counter extends React.Component {
+//   constructor(props) {
+//     super(props);
+//     this.state = {
+//       list: ['A', 'B', 'C', 'D', 'E', 'F'],
+//     };
+//   }
+//   handleClick = () => {
+//     this.setState({
+//       list: ['A', 'C', 'E', 'B', 'G'],
+//     });
+//   };
+//   render() {
+//     return (
+//       <React.Fragment>
+//         <ul>
+//           {this.state.list.map((item) => (
+//             <li key={item}>{item}</li>
+//           ))}
+//         </ul>
+//         <button onClick={this.handleClick}></button>
+//       </React.Fragment>
+//     );
+//   }
+// }
+// ReactDOM.render(<Counter />, document.getElementById('root'));
+let ThemeContext = React.createContext();
+// class Header extends React.Component {
+//   static contextType = ThemeContext;
+//   render() {
+//     return (
+//       <div
+//         style={{
+//           margin: 10,
+//           border: `5px solid ${this.context.color}`,
+//           padding: '5px',
+//         }}
+//       >
+//         Header{this.props.children}
+//       </div>
+//     );
+//   }
+// }
+function Header(props) {
+  return (
+    <ThemeContext.Consumer>
+      {(value) => (
+        <div
+          style={{
+            margin: 10,
+            border: `5px solid ${value.color}`,
+            padding: '5px',
+          }}
+        >
+          Header{props.children}
+        </div>
+      )}
+    </ThemeContext.Consumer>
+  );
+}
+class Title extends React.Component {
+  static contextType = ThemeContext;
+
   render() {
     return (
-      <React.Fragment>
-        <ul>
-          {this.state.list.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-        <button onClick={this.handleClick}></button>
-      </React.Fragment>
+      <div
+        style={{
+          margin: 10,
+          border: `5px solid ${this.context.color}`,
+          padding: '5px',
+        }}
+      >
+        Title{this.props.children}
+      </div>
     );
   }
 }
-ReactDOM.render(<Counter />, document.getElementById('root'));
+class Main extends React.Component {
+  static contextType = ThemeContext;
+  render() {
+    return (
+      <div
+        style={{
+          margin: 10,
+          border: `5px solid ${this.context.color}`,
+          padding: '5px',
+        }}
+      >
+        Main{this.props.children}
+      </div>
+    );
+  }
+}
+class Content extends React.Component {
+  static contextType = ThemeContext;
+  render() {
+    return (
+      <div
+        style={{
+          margin: 10,
+          border: `5px solid ${this.context.color}`,
+          padding: '5px',
+        }}
+      >
+        content
+        <button onClick={() => this.context.changeColor('red')}>red</button>
+        <button onClick={() => this.context.changeColor('green')}>green</button>
+        {this.props.children}
+      </div>
+    );
+  }
+}
+
+class Page extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { color: 'red' };
+  }
+  changeColor = (color) => {
+    this.setState({
+      color,
+    });
+  };
+  render() {
+    let value = { color: this.state.color, changeColor: this.changeColor };
+    return (
+      <ThemeContext.Provider value={value}>
+        <div
+          style={{
+            margin: 10,
+            border: `5px solid ${this.state.color}`,
+            padding: '5px',
+          }}
+        >
+          <Header>
+            <Title></Title>
+          </Header>
+        </div>
+        <div
+          style={{
+            margin: 10,
+            border: `5px solid ${this.state.color}`,
+            padding: '5px',
+          }}
+        >
+          <Main>
+            <Content></Content>
+          </Main>
+        </div>
+      </ThemeContext.Provider>
+    );
+  }
+}
+
+ReactDOM.render(<Page />, document.getElementById('root'));

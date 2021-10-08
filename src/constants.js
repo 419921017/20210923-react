@@ -6,3 +6,6 @@ export const REACT_FRAGMENT = Symbol('react.fragment');
 export const PLACEMENT = 'PLACEMENT';
 export const MOVE = 'MOVE';
 export const DELETION = 'DELETION';
+
+export const REACT_PROVIDER = Symbol('react.provider');
+export const REACT_CONTEXT = Symbol('react.context');

@@ -2,9 +2,11 @@ import {
   DELETION,
   MOVE,
   PLACEMENT,
+  REACT_CONTEXT,
   REACT_ELEMENT,
   REACT_FORWARD_REF,
   REACT_FRAGMENT,
+  REACT_PROVIDER,
   REACT_TEXT,
 } from './constants';
 import { addEvent } from './event';
@@ -49,7 +51,11 @@ export function createDOM(vdom) {
   let { type, props, $$typeof, ref } = vdom;
   // 真实dom
   let dom;
-  if (type && type.$$typeof === REACT_FORWARD_REF) {
+  if (type && type.$$typeof === REACT_PROVIDER) {
+    return mountProvider(vdom);
+  } else if (type && type.$$typeof === REACT_CONTEXT) {
+    return mountContext(vdom);
+  } else if (type && type.$$typeof === REACT_FORWARD_REF) {
     return mountForwardComponent(vdom);
   } else if (type === REACT_FRAGMENT) {
     dom = document.createDocumentFragment();
@@ -85,6 +91,36 @@ export function createDOM(vdom) {
   return dom;
 }
 
+/**
+ * Provider组件的渲染
+ *
+ * @param {*} vdom
+ * @return {*}
+ */
+function mountProvider(vdom) {
+  let { type, props, ref } = vdom;
+  let context = type._context;
+  context._currentValue = props.value;
+  let renderVdom = props.children;
+  // 让当前的oldRenderVdom指向renderVdom, 主要是为了findDOM寻找真实dom
+  vdom.oldRenderVdom = renderVdom;
+  return createDOM(renderVdom);
+}
+
+/**
+ * Customer组件的渲染
+ *
+ * @param {*} vdom
+ */
+function mountContext(vdom) {
+  let { type, props, ref } = vdom;
+  let context = type._context;
+  let currentValue = context._currentValue;
+  let renderVdom = props.children(currentValue);
+  vdom.oldRenderVdom = renderVdom;
+  return createDOM(renderVdom);
+}
+
 function mountForwardComponent(vdom) {
   let { type, props, ref } = vdom;
   let renderVdom = type.render(props, ref);
@@ -101,6 +137,9 @@ function mountForwardComponent(vdom) {
 function mountClassComponent(vdom) {
   let { type: ClassComponent, props, ref } = vdom;
   let classInstance = new ClassComponent(props);
+  if (ClassComponent.contextType) {
+    classInstance.context = ClassComponent.contextType._currentValue;
+  }
   // 设置ref值为类组件实例
   if (ref) ref.current = classInstance;
 
@@ -236,10 +275,13 @@ export function compareTwoVdom(parentNode, oldVdom, newVdom, nextDOM) {
  * @param {*} newVdom
  */
 function updateElement(oldVdom, newVdom) {
-  if (oldVdom.$$typeof === REACT_TEXT) {
+  if (oldVdom.$$typeof === REACT_PROVIDER) {
+    updateProvider(oldVdom, newVdom);
+  } else if (oldVdom.$$typeof === REACT_CONTEXT) {
+    updateContext(oldVdom, newVdom);
+  } else if (oldVdom.$$typeof === REACT_TEXT) {
     if (oldVdom.props.content !== newVdom.props.content) {
       let currentDOM = (newVdom.dom = findDOM(oldVdom));
-
       currentDOM.textContent = newVdom.props.content;
     }
   } else if (oldVdom.type === REACT_FRAGMENT) {
@@ -258,6 +300,27 @@ function updateElement(oldVdom, newVdom) {
       updateFunctionComponent(oldVdom, newVdom);
     }
   }
+}
+
+function updateProvider(oldVdom, newVdom) {
+  let currentDOM = findDOM(oldVdom);
+  let parentDOM = currentDOM.parentNode;
+  let { type, props } = newVdom;
+  let context = type._context;
+  context._currentValue = props.value;
+  let renderVdom = props.children;
+  compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom);
+  newVdom.oldRenderVdom = renderVdom;
+}
+
+function updateContext(oldVdom, newVdom) {
+  let currentDOM = findDOM(oldVdom);
+  let parentDOM = currentDOM.parentNode;
+  let { type, props } = newVdom;
+  let context = type._context;
+  let renderVdom = props.children(context._currentValue);
+  compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom);
+  newVdom.oldRenderVdom = renderVdom;
 }
 
 /**
