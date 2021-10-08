@@ -5,6 +5,7 @@ import {
   REACT_FRAGMENT,
   REACT_PROVIDER,
 } from './constants';
+import { shallowEquals } from './utils';
 import { wrapToVdom } from './utils';
 import Component from './component';
 
@@ -83,6 +84,15 @@ function createContext() {
   return context;
 }
 
+class PureComponent extends Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    return (
+      !shallowEquals(this.props, nextProps) ||
+      !shallowEquals(this.state, nextState)
+    );
+  }
+}
+
 const React = {
   createElement,
   Component,
@@ -90,6 +100,7 @@ const React = {
   forwardRef,
   Fragment: REACT_FRAGMENT,
   createContext,
+  PureComponent,
 };
 
 export default React;
