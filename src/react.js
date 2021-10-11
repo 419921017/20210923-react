@@ -107,6 +107,10 @@ function useContext(context) {
   return context._currentValue;
 }
 
+function useImperativeHandle(ref, handler) {
+  ref.current = handler();
+}
+
 const React = {
   createElement,
   Component,
@@ -121,6 +125,7 @@ const React = {
   useCallback,
   useReducer,
   useContext,
+  useImperativeHandle,
 };
 
 export default React;
