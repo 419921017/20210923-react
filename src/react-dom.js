@@ -49,13 +49,14 @@ export function mount(vdom, parentDOM) {
 }
 
 export function useState(initState) {
-  hookState[hookIndex] = hookState[hookIndex] || initState;
-  let currentIndex = hookIndex;
-  function setState(newState) {
-    hookState[currentIndex] = newState;
-    scheduleUpdate();
-  }
-  return [hookState[hookIndex++], setState];
+  return useReducer(null, initState);
+  // hookState[hookIndex] = hookState[hookIndex] || initState;
+  // let currentIndex = hookIndex;
+  // function setState(newState) {
+  //   hookState[currentIndex] = newState;
+  //   scheduleUpdate();
+  // }
+  // return [hookState[hookIndex++], setState];
 }
 
 export function useMemo(factory, deps) {
@@ -92,6 +93,18 @@ export function useCallback(callback, deps) {
     hookState[hookIndex++] = [callback, deps];
     return callback;
   }
+}
+
+export function useReducer(reducer, initState) {
+  hookState[hookIndex] = hookState[hookIndex] || initState;
+  let currentIndex = hookIndex;
+  function dispatch(action) {
+    hookState[currentIndex] = reducer
+      ? reducer(hookState[currentIndex], action)
+      : action;
+    scheduleUpdate();
+  }
+  return [hookState[hookIndex++], dispatch];
 }
 
 /**

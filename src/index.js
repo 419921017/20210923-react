@@ -348,14 +348,14 @@ import ReactDOM from 'react-dom';
 
 // console.log('React.memo', React.memo);
 
-function Counter(props) {
-  const [number, setNumber] = React.useState(0);
-  let handleClick = () => setNumber(number + 1);
-  return (
-    <div>
-      {number}
-      <button onClick={handleClick}>+</button>
-    </div>
-  );
-}
-ReactDOM.render(<Counter />, document.getElementById('root'));
+// function Counter(props) {
+//   const [number, setNumber] = React.useState(0);
+//   let handleClick = () => setNumber(number + 1);
+//   return (
+//     <div>
+//       {number}
+//       <button onClick={handleClick}>+</button>
+//     </div>
+//   );
+// }
+// ReactDOM.render(<Counter />, document.getElementById('root'));
