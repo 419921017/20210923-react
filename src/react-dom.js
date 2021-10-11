@@ -11,6 +11,13 @@ import {
   REACT_TEXT,
 } from './constants';
 import { addEvent } from './event';
+
+let scheduleUpdate;
+
+// 全局变量, 用来记录hook的值
+let hookState = [];
+// 当前hook的索引
+let hookIndex = 0;
 /**
  * 将虚拟dom变成真实dom, 插入到容器内部
  * react的入口
@@ -18,8 +25,12 @@ import { addEvent } from './event';
  * @param {*} vdom
  * @param {*} container
  */
-function render(vdom, container) {
-  mount(vdom, container);
+function render(vdom, parentDOM) {
+  mount(vdom, parentDOM);
+  scheduleUpdate = () => {
+    hookIndex = 0;
+    compareTwoVdom(parentDOM, vdom, vdom);
+  };
 }
 
 /**
@@ -34,6 +45,52 @@ export function mount(vdom, parentDOM) {
   if (newDOM && parentDOM) {
     parentDOM.appendChild(newDOM);
     if (newDOM._componentDidMount) newDOM._componentDidMount();
+  }
+}
+
+export function useState(initState) {
+  hookState[hookIndex] = hookState[hookIndex] || initState;
+  let currentIndex = hookIndex;
+  function setState(newState) {
+    hookState[currentIndex] = newState;
+    scheduleUpdate();
+  }
+  return [hookState[hookIndex++], setState];
+}
+
+export function useMemo(factory, deps) {
+  if (hookState[hookIndex]) {
+    let [lastMemo, lastDeps] = hookState[hookIndex];
+    let same = deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+      return lastMemo;
+    } else {
+      let newMemo = factory();
+      hookState[hookIndex++] = [newMemo, deps];
+      return newMemo;
+    }
+  } else {
+    let newMemo = factory();
+    hookState[hookIndex++] = [newMemo, deps];
+    return newMemo;
+  }
+}
+
+export function useCallback(callback, deps) {
+  if (hookState[hookIndex]) {
+    let [lastCallback, lastDeps] = hookState[hookIndex];
+    let same = deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+      return lastCallback;
+    } else {
+      hookState[hookIndex++] = [callback, deps];
+      return callback;
+    }
+  } else {
+    hookState[hookIndex++] = [callback, deps];
+    return callback;
   }
 }
 

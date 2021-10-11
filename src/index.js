@@ -346,4 +346,16 @@ import ReactDOM from 'react-dom';
 //   document.getElementById('root')
 // );
 
-console.log('React.memo', React.memo);
+// console.log('React.memo', React.memo);
+
+function Counter(props) {
+  const [number, setNumber] = React.useState(0);
+  let handleClick = () => setNumber(number + 1);
+  return (
+    <div>
+      {number}
+      <button onClick={handleClick}>+</button>
+    </div>
+  );
+}
+ReactDOM.render(<Counter />, document.getElementById('root'));

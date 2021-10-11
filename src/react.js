@@ -9,6 +9,7 @@ import {
 import { shallowEquals } from './utils';
 import { wrapToVdom } from './utils';
 import Component from './component';
+import { useState, useMemo, useCallback } from './react-dom';
 
 /**
  * 创建虚拟DOM, React Element
@@ -111,6 +112,9 @@ const React = {
   createContext,
   PureComponent,
   memo,
+  useState,
+  useMemo,
+  useCallback,
 };
 
 export default React;
