@@ -524,6 +524,7 @@ function unMountVdom(vdom) {
 
 const ReactDOM = {
   render,
+  createPortal: render,
 };
 
 export default ReactDOM;
