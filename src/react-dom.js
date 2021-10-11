@@ -99,12 +99,37 @@ export function useReducer(reducer, initState) {
   hookState[hookIndex] = hookState[hookIndex] || initState;
   let currentIndex = hookIndex;
   function dispatch(action) {
+    action =
+      typeof action === 'function' ? action(hookState[currentIndex]) : action;
+
     hookState[currentIndex] = reducer
       ? reducer(hookState[currentIndex], action)
       : action;
     scheduleUpdate();
   }
   return [hookState[hookIndex++], dispatch];
+}
+
+export function useEffect(effect, deps) {
+  if (hookState[hookIndex]) {
+    let [lastDestory, lastDeps] = hookState[hookIndex];
+    let same = deps && deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+    } else {
+      lastDestory && lastDestory();
+      // 开启一个新的宏任务
+      setTimeout(() => {
+        let destory = effect();
+        hookState[hookIndex++] = [destory, deps];
+      });
+    }
+  } else {
+    setTimeout(() => {
+      let destory = effect();
+      hookState[hookIndex++] = [destory, deps];
+    });
+  }
 }
 
 /**
