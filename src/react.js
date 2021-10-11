@@ -3,6 +3,7 @@ import {
   REACT_ELEMENT,
   REACT_FORWARD_REF,
   REACT_FRAGMENT,
+  REACT_MEMO,
   REACT_PROVIDER,
 } from './constants';
 import { shallowEquals } from './utils';
@@ -93,6 +94,14 @@ class PureComponent extends Component {
   }
 }
 
+function memo(type, compare = shallowEquals) {
+  return {
+    $$typeof: REACT_MEMO,
+    type,
+    compare,
+  };
+}
+
 const React = {
   createElement,
   Component,
@@ -101,6 +110,7 @@ const React = {
   Fragment: REACT_FRAGMENT,
   createContext,
   PureComponent,
+  memo,
 };
 
 export default React;

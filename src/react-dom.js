@@ -6,6 +6,7 @@ import {
   REACT_ELEMENT,
   REACT_FORWARD_REF,
   REACT_FRAGMENT,
+  REACT_MEMO,
   REACT_PROVIDER,
   REACT_TEXT,
 } from './constants';
@@ -51,7 +52,9 @@ export function createDOM(vdom) {
   let { type, props, $$typeof, ref } = vdom;
   // 真实dom
   let dom;
-  if (type && type.$$typeof === REACT_PROVIDER) {
+  if (type && type.$$typeof === REACT_MEMO) {
+    return mountMemo(vdom);
+  } else if (type && type.$$typeof === REACT_PROVIDER) {
     return mountProvider(vdom);
   } else if (type && type.$$typeof === REACT_CONTEXT) {
     return mountContext(vdom);
@@ -89,6 +92,16 @@ export function createDOM(vdom) {
     ref.current = dom;
   }
   return dom;
+}
+
+function mountMemo(vdom) {
+  let { type, props } = vdom;
+  let renderVdom = type.type(props);
+  // 上一个属性对象, 主要用对对比
+  vdom.prevProps = props;
+  // vdom.oldRenderVdom 主要用于findDOM
+  vdom.oldRenderVdom = renderVdom;
+  return createDOM(renderVdom);
 }
 
 /**
@@ -275,7 +288,9 @@ export function compareTwoVdom(parentNode, oldVdom, newVdom, nextDOM) {
  * @param {*} newVdom
  */
 function updateElement(oldVdom, newVdom) {
-  if (oldVdom.$$typeof === REACT_PROVIDER) {
+  if (oldVdom.$$typeof === REACT_MEMO) {
+    updateMemo(oldVdom, newVdom);
+  } else if (oldVdom.$$typeof === REACT_PROVIDER) {
     updateProvider(oldVdom, newVdom);
   } else if (oldVdom.$$typeof === REACT_CONTEXT) {
     updateContext(oldVdom, newVdom);
@@ -299,6 +314,24 @@ function updateElement(oldVdom, newVdom) {
     } else {
       updateFunctionComponent(oldVdom, newVdom);
     }
+  }
+}
+
+function updateMemo(oldVdom, newVdom) {
+  let { type, prevProps } = oldVdom;
+  // 不需要渲染
+  if (type.compare(prevProps, newVdom.props)) {
+    newVdom.prevProps = newVdom.props;
+    newVdom.oldRenderVdom = oldVdom.oldRenderVdom;
+    return;
+  } else {
+    let currentDOM = findDOM(oldVdom);
+    let parentDOM = currentDOM.parentNode;
+    let { type, props } = newVdom;
+    let renderVdom = type.type(props);
+    compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, renderVdom);
+    newVdom.prevProps = props;
+    newVdom.oldRenderVdom = renderVdom;
   }
 }
 

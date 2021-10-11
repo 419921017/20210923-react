@@ -345,3 +345,5 @@ import ReactDOM from 'react-dom';
 //   <Button title="标题"></Button>,
 //   document.getElementById('root')
 // );
+
+console.log('React.memo', React.memo);
